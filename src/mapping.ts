@@ -1,82 +1,90 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, ipfs, json, JSONValue } from "@graphprotocol/graph-ts";
+import { cryptocoven, Transfer } from "../generated/cryptocoven/cryptocoven";
+import { Account, NFT, MetaData } from "../generated/schema";
 import {
-  cryptocoven,
-  Approval,
-  ApprovalForAll,
-  OwnershipTransferred,
-  Transfer
-} from "../generated/cryptocoven/cryptocoven"
-import { ExampleEntity } from "../generated/schema"
+  getOrCreateAccount,
+  getOrCreateNFT,
+  getMetaData,
+} from "./helper/utils";
 
-export function handleApproval(event: Approval): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+const ipfshash = "QmSr3vdMuP2fSxWD7S26KzzBWcAN1eNhm4hk1qaR3x3vmj";
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
+export function handleTransfer(event: Transfer): void {
+  let tokenId = event.params.tokenId;
+  let nft = getOrCreateNFT(event.params.tokenId);
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+  let account = getOrCreateAccount(event.params.from);
+
+  let rAccount = getOrCreateAccount(event.params.to);
+
+  let metadata = getMetaData(event.params.tokenId);
+  // combine ipfshash + tokenId  + .json --- why does it return bytes instead of string?
+  let metaAttributes = ipfs.cat(
+    metadata.ipfsHash + tokenId.toString() + ".json"
+  );
+
+  if (metaAttributes) {
+    const value = json.fromBytes(metaAttributes).toObject();
+
+    if (value) {
+      const image = value.get("image");
+      const name = value.get("name");
+      const description = value.get("description");
+      const externalURL = value.get("externalURL");
+      const backgroundColor = value.get("backgroundColor");
+      const attributes = value.get("attributes");
+
+      if (
+        name &&
+        image &&
+        description &&
+        externalURL &&
+        backgroundColor &&
+        attributes
+      ) {
+        metadata.name = name.toString();
+        metadata.image = image.toString();
+        metadata.description = description.toString();
+        metadata.backgroundColor = backgroundColor.toString();
+        metadata.externalURL = externalURL.toString();
+        metadata.attributes = [attributes.toString()];
+      }
+
+      const coven = value.get("coven");
+      if (coven) {
+        let covenData = coven.toObject();
+
+        const type = covenData.get("type");
+
+        if (type) {
+          metadata.type = type.toString();
+        }
+
+        const birthChart = covenData.get("birthChart");
+        if (birthChart) {
+          const birthChartData = birthChart.toObject();
+          const sun = birthChartData.get("sun");
+          const moon = birthChartData.get("moon");
+          const rising = birthChartData.get("rising");
+
+          if (sun && moon && rising) {
+            metadata.sun = sun.toString();
+            metadata.moon = moon.toString();
+            metadata.rising = rising.toString();
+          }
+        }
+      }
+
+      nft.tokenID = event.params.tokenId;
+      nft.owner = event.params.to.toHexString();
+      nft.metadata = metadata.id;
+      nft.tokenURI =
+        "/ipfs.io/ipfs/" +
+        "QmSr3vdMuP2fSxWD7S26KzzBWcAN1eNhm4hk1qaR3x3vmj" +
+        event.params.tokenId.toString() +
+        ".json";
+
+      metadata.save();
+    }
   }
-
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.owner = event.params.owner
-  entity.approved = event.params.approved
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.COMMUNITY_SALE_PRICE(...)
-  // - contract.MAX_WITCHES_PER_WALLET(...)
-  // - contract.PUBLIC_SALE_PRICE(...)
-  // - contract.balanceOf(...)
-  // - contract.claimListMerkleRoot(...)
-  // - contract.claimed(...)
-  // - contract.communityMintCounts(...)
-  // - contract.communitySaleMerkleRoot(...)
-  // - contract.getApproved(...)
-  // - contract.getBaseURI(...)
-  // - contract.getLastTokenId(...)
-  // - contract.isApprovedForAll(...)
-  // - contract.isCommunitySaleActive(...)
-  // - contract.isPublicSaleActive(...)
-  // - contract.maxCommunitySaleWitches(...)
-  // - contract.maxGiftedWitches(...)
-  // - contract.maxWitches(...)
-  // - contract.name(...)
-  // - contract.numGiftedWitches(...)
-  // - contract.owner(...)
-  // - contract.ownerOf(...)
-  // - contract.royaltyInfo(...)
-  // - contract.supportsInterface(...)
-  // - contract.symbol(...)
-  // - contract.tokenURI(...)
-  // - contract.verificationHash(...)
 }
-
-export function handleApprovalForAll(event: ApprovalForAll): void {}
-
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
-
-export function handleTransfer(event: Transfer): void {}
