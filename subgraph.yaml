@@ -15,7 +15,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Account
-        - NFT
+        - Nft
       abis:
         - name: Token
           file: ./abis/cryptocoven.json

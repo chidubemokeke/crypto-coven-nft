@@ -1,9 +1,9 @@
 type Account @entity {
   id: ID!
-  nftOwned: [NFT!]! @derived(field: "owner")
+  nftOwned: [Nft!]! @derived(field: "owner")
 }
 
-type NFT @entity {
+type Nft @entity {
   id: ID!
   tokenURI: String!
   tokenID: BigInt!

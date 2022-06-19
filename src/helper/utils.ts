@@ -5,7 +5,7 @@ import {
   json,
   JSONValue,
 } from "@graphprotocol/graph-ts";
-import { Account, MetaData, NFT } from "../../generated/schema";
+import { Account, MetaData, Nft } from "../../generated/schema";
 
 export function getOrCreateAccount(userAddress: Address): Account {
   let account = Account.load(userAddress.toHexString());
@@ -15,10 +15,10 @@ export function getOrCreateAccount(userAddress: Address): Account {
   return account;
 }
 
-export function getOrCreateNFT(tokenId: BigInt): NFT {
-  let nft = NFT.load(tokenId.toString());
+export function getOrCreateNFT(tokenId: BigInt): Nft {
+  let nft = Nft.load(tokenId.toString());
   if (!nft) {
-    nft = new NFT(tokenId.toString());
+    nft = new Nft(tokenId.toString());
   }
   return nft;
 }

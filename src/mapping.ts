@@ -1,6 +1,6 @@
 import { BigInt, ipfs, json, JSONValue } from "@graphprotocol/graph-ts";
 import { cryptocoven, Transfer } from "../generated/cryptocoven/cryptocoven";
-import { Account, NFT, MetaData } from "../generated/schema";
+import { Account, Nft, MetaData } from "../generated/schema";
 
 // import functions from helper/utils.ts
 import {
@@ -27,6 +27,8 @@ export function handleTransfer(event: Transfer): void {
     event.params.tokenId.toString() +
     ".json";
   nft.save();
+  account.save();
+  rAccount.save();
 
   let metadata = getMetaData(event.params.tokenId);
 

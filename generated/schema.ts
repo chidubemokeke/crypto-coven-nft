@@ -54,7 +54,7 @@ export class Account extends Entity {
   }
 }
 
-export class NFT extends Entity {
+export class Nft extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
@@ -65,18 +65,18 @@ export class NFT extends Entity {
 
   save(): void {
     let id = this.get("id");
-    assert(id != null, "Cannot save NFT entity without an ID");
+    assert(id != null, "Cannot save Nft entity without an ID");
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type NFT must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type Nft must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("NFT", id.toString(), this);
+      store.set("Nft", id.toString(), this);
     }
   }
 
-  static load(id: string): NFT | null {
-    return changetype<NFT | null>(store.get("NFT", id));
+  static load(id: string): Nft | null {
+    return changetype<Nft | null>(store.get("Nft", id));
   }
 
   get id(): string {
