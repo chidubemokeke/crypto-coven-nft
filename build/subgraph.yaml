@@ -14,7 +14,8 @@ dataSources:
       apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
-        - Transfer
+        - Account
+        - NFT
       abis:
         - name: Token
           file: cryptocoven/abis/cryptocoven.json

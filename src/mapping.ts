@@ -1,26 +1,38 @@
 import { BigInt, ipfs, json, JSONValue } from "@graphprotocol/graph-ts";
 import { cryptocoven, Transfer } from "../generated/cryptocoven/cryptocoven";
 import { Account, NFT, MetaData } from "../generated/schema";
+
+// import functions from helper/utils.ts
 import {
   getOrCreateAccount,
   getOrCreateNFT,
   getMetaData,
 } from "./helper/utils";
 
+// Declare IPFS hash of the JSON metadata
 const ipfshash = "QmSr3vdMuP2fSxWD7S26KzzBWcAN1eNhm4hk1qaR3x3vmj";
 
 export function handleTransfer(event: Transfer): void {
-  let tokenId = event.params.tokenId;
   let nft = getOrCreateNFT(event.params.tokenId);
 
   let account = getOrCreateAccount(event.params.from);
 
   let rAccount = getOrCreateAccount(event.params.to);
 
+  nft.owner = event.params.to.toHexString();
+  nft.tokenID = event.params.tokenId;
+  nft.tokenURI =
+    "/ipfs.io/ipfs/" +
+    "QmSr3vdMuP2fSxWD7S26KzzBWcAN1eNhm4hk1qaR3x3vmj" +
+    event.params.tokenId.toString() +
+    ".json";
+  nft.save();
+
   let metadata = getMetaData(event.params.tokenId);
+
   // combine ipfshash + tokenId  + .json --- why does it return bytes instead of string?
   let metaAttributes = ipfs.cat(
-    metadata.ipfsHash + tokenId.toString() + ".json"
+    metadata.ipfsHash + event.params.tokenId.toString() + ".json"
   );
 
   if (metaAttributes) {
@@ -75,15 +87,7 @@ export function handleTransfer(event: Transfer): void {
         }
       }
 
-      nft.tokenID = event.params.tokenId;
-      nft.owner = event.params.to.toHexString();
       nft.metadata = metadata.id;
-      nft.tokenURI =
-        "/ipfs.io/ipfs/" +
-        "QmSr3vdMuP2fSxWD7S26KzzBWcAN1eNhm4hk1qaR3x3vmj" +
-        event.params.tokenId.toString() +
-        ".json";
-
       metadata.save();
     }
   }
